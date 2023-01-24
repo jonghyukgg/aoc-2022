@@ -3,7 +3,7 @@ use std::fs;
 
 fn get_calories(filename: &str) -> Vec<i32> {
     fs::read_to_string(filename)
-        .expect("Input for the first star")
+        .expect("Input for the problem")
         .split("\n\n")
         .map(|items| {
             items
