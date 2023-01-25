@@ -20,32 +20,29 @@ fn get_ranges(filename: &str) -> Vec<((i32, i32), (i32, i32))> {
         .collect()
 }
 
+fn range_contains(r1: &(i32, i32), r2: &(i32, i32)) -> bool {
+    (r1.0 <= r2.0 && r2.1 <= r1.1) || (r2.0 <= r1.0 && r1.1 <= r2.1)
+}
+
 fn part1() {
-    let ranges = get_ranges("input1.txt");
-
-    let res = ranges
-        .iter()
-        .filter(|r| {
-            (r.0 .0 <= r.1 .0 && r.1 .1 <= r.0 .1) || (r.1 .0 <= r.0 .0 && r.0 .1 <= r.1 .1)
-        })
-        .count();
-
+    let ranges = get_ranges("input.txt");
+    let res = ranges.iter().filter(|r| range_contains(&r.0, &r.1)).count();
     println!("{}", res);
 }
 
-fn part2() {
-    let ranges = get_ranges("input2.txt");
+fn range_intersects(r1: &(i32, i32), r2: &(i32, i32)) -> bool {
+    (r1.0 <= r2.0 && r2.0 <= r1.1)
+        || (r1.0 <= r2.1 && r2.1 <= r1.1)
+        || (r2.0 <= r1.0 && r1.0 <= r2.1)
+        || (r2.0 <= r1.1 && r1.1 <= r2.1)
+}
 
+fn part2() {
+    let ranges = get_ranges("input.txt");
     let res = ranges
         .iter()
-        .filter(|r| {
-            (r.0 .0 <= r.1 .0 && r.1 .0 <= r.0 .1)
-                || (r.0 .0 <= r.1 .1 && r.1 .1 <= r.0 .1)
-                || (r.1 .0 <= r.0 .0 && r.0 .0 <= r.1 .1)
-                || (r.1 .0 <= r.0 .1 && r.0 .1 <= r.1 .1)
-        })
+        .filter(|r| range_intersects(&r.0, &r.1))
         .count();
-
     println!("{}", res);
 }
 

@@ -1,12 +1,14 @@
 use std::fs;
 
-fn parse_input(filename: &str) -> (Vec<Vec<char>>, Vec<(usize, usize, usize)>) {
+type Stacks = Vec<Vec<char>>;
+
+fn parse_input(filename: &str) -> (Stacks, Vec<(usize, usize, usize)>) {
     let input: String = fs::read_to_string(filename).expect("Input for the problem");
     let splited_input: Vec<&str> = input.split("\n\n").collect();
 
     // parse stacks
     let stacks_input: Vec<&str> = splited_input[0].rsplit("\n").collect();
-    let mut stacks: Vec<Vec<char>> = vec![];
+    let mut stacks: Stacks = vec![];
     stacks_input[0]
         .split(" ")
         .filter(|s| !s.is_empty())
@@ -38,65 +40,54 @@ fn parse_input(filename: &str) -> (Vec<Vec<char>>, Vec<(usize, usize, usize)>) {
     (stacks, commands)
 }
 
-fn part1() {
-    let (mut stacks, commands) = parse_input("input1.txt");
-    // for (idx, s) in stacks.iter().enumerate() {
-    //     print!("{}: ", idx + 1);
-    //     s.iter().for_each(|c| {
-    //         print!("{} ", c);
-    //     });
-    //     println!();
-    // }
-    // for c in commands.iter() {
-    //     println!("{} {} {}", c.0, c.1, c.2);
-    // }
+#[allow(dead_code)]
+fn print_stacks(stacks: &Stacks) {
+    for (idx, s) in stacks.iter().enumerate() {
+        print!("{}: ", idx + 1);
+        s.iter().for_each(|c| {
+            print!("{} ", c);
+        });
+        println!();
+    }
+}
 
+fn get_tops(stacks: &Stacks) -> String {
+    stacks
+        .iter()
+        .map(|s| s.last().unwrap().clone())
+        .collect::<String>()
+}
+
+fn part1() {
+    let (mut stacks, commands) = parse_input("input.txt");
+    // print_stacks(&stacks);
     for c in commands.iter() {
         for _ in 0..c.0 {
             let cr = stacks[c.1].pop().unwrap();
             stacks[c.2].push(cr);
         }
     }
-    // for (idx, s) in stacks.iter().enumerate() {
-    //     print!("{}: ", idx + 1);
-    //     s.iter().for_each(|c| {
-    //         print!("{} ", c);
-    //     });
-    //     println!();
-    // }
+    // print_stacks(&stacks);
 
-    let res = stacks
-        .iter()
-        .map(|s| s.last().unwrap().clone())
-        .collect::<String>();
+    let res = get_tops(&stacks);
     println!("{}", res);
 }
 
 fn part2() {
-    let (mut stacks, commands) = parse_input("input2.txt");
-
+    let (mut stacks, commands) = parse_input("input.txt");
+    // print_stacks(&stacks);
     for c in commands.iter() {
         let mut temp_stack: Vec<char> = vec![];
         for _ in 0..c.0 {
-            let cr = stacks[c.1].pop().unwrap();
-            temp_stack.push(cr);
+            temp_stack.push(stacks[c.1].pop().unwrap());
         }
-        for temp_c in temp_stack.into_iter().rev() {
-            stacks[c.2].push(temp_c);
+        while !temp_stack.is_empty() {
+            stacks[c.2].push(temp_stack.pop().unwrap());
         }
     }
-    // for (idx, s) in stacks.iter().enumerate() {
-    //     print!("{}: ", idx + 1);
-    //     s.iter().for_each(|c| {
-    //         print!("{} ", c);
-    //     });
-    //     println!();
-    // }
+    // print_stacks(&stacks);
 
-    let res = stacks
-        .iter()
-        .map(|s| s.last().unwrap().clone())
-        .collect::<String>();
+    let res = get_tops(&stacks);
     println!("{}", res);
 }
 

@@ -1,38 +1,46 @@
 use std::collections::HashSet;
 use std::fs;
 
-fn g(p1: &str, p2: &str) -> char {
-    for c1 in p1.chars() {
-        for c2 in p2.chars() {
-            if c1 == c2 {
-                return c1;
+fn get_shared(c1: &str, c2: &str) -> char {
+    for i1 in c1.chars() {
+        for i2 in c2.chars() {
+            if i1 == i2 {
+                return i1;
             }
         }
     }
     panic!("Invalid input");
 }
 
-fn f(line: &str) -> i32 {
-    let p1: &str = &line[..line.len() / 2];
-    let p2: &str = &line[line.len() / 2..];
-    let s = g(p1, p2);
-    if s.is_lowercase() {
-        s as i32 - 96
+fn item_score(item: &char) -> usize {
+    if item.is_lowercase() {
+        *item as usize - 96
     } else {
-        s as i32 - 64 + 26
+        *item as usize - 64 + 26
     }
 }
 
+fn process_rucksack(line: &str) -> usize {
+    let c1: &str = &line[..line.len() / 2];
+    let c2: &str = &line[line.len() / 2..];
+    let shared = get_shared(c1, c2);
+    item_score(&shared)
+}
+
+fn read_input(filename: &str) -> String {
+    fs::read_to_string(filename).expect("Input for the problem")
+}
+
 fn part1() {
-    let res = fs::read_to_string("input1.txt")
-        .expect("Input for the problem")
+    let input = read_input("input.txt");
+    let res = input
         .split("\n")
-        .map(|line| f(&line))
-        .sum::<i32>();
+        .map(|line| process_rucksack(&line))
+        .sum::<usize>();
     println!("{}", res);
 }
 
-fn h(lines: &Vec<&str>) -> i32 {
+fn set_of_alphabets() -> HashSet<char> {
     let mut chars: HashSet<char> = HashSet::new();
     for c in 'a'..='z' {
         chars.insert(c);
@@ -40,35 +48,35 @@ fn h(lines: &Vec<&str>) -> i32 {
     for c in 'A'..='Z' {
         chars.insert(c);
     }
-    let mut new_chars: HashSet<char>;
+    chars
+}
+
+fn process_rucksack_group(lines: &Vec<&str>) -> usize {
+    let mut chars = set_of_alphabets();
+    let mut remaining_chars: HashSet<char>;
     for line in lines.iter() {
-        new_chars = HashSet::new();
+        remaining_chars = HashSet::new();
         for c in line.chars() {
             if chars.contains(&c) {
-                new_chars.insert(c);
+                remaining_chars.insert(c);
             }
         }
-        chars = new_chars;
+        chars = remaining_chars;
     }
-    let c: char = chars.iter().next().unwrap().clone();
-    if c.is_lowercase() {
-        c as i32 - 96
-    } else {
-        c as i32 - 64 + 26
-    }
+    assert!(chars.len() == 1);
+    let shared: char = chars.iter().next().unwrap().clone();
+    item_score(&shared)
 }
 
 fn part2() {
-    let mut lines: Vec<&str> = vec![];
-    let mut res: i32 = 0;
-    for line in fs::read_to_string("input2.txt")
-        .expect("Input for the problem")
-        .split("\n")
-    {
-        lines.push(line);
-        if lines.len() == 3 {
-            res += h(&lines);
-            lines.clear();
+    let input = read_input("input.txt");
+    let mut lines_buffer: Vec<&str> = vec![];
+    let mut res: usize = 0;
+    for line in input.split("\n") {
+        lines_buffer.push(line);
+        if lines_buffer.len() == 3 {
+            res += process_rucksack_group(&lines_buffer);
+            lines_buffer.clear();
         }
     }
     println!("{}", res);
