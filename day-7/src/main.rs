@@ -85,23 +85,23 @@ fn process_input(input: &str) -> Rc<RefCell<Node>> {
     root
 }
 
-fn traverse_part1(node: Rc<RefCell<Node>>) -> (usize, usize) {
+fn traverse_part1<const N: usize>(node: Rc<RefCell<Node>>) -> (usize, usize) {
     let node_b = node.borrow_mut();
     let mut size = node_b.size.unwrap_or(0);
     let mut res = 0;
     node_b.children.values().for_each(|c| {
-        let (sub_size, sub_res) = traverse_part1(Rc::clone(c));
+        let (sub_size, sub_res) = traverse_part1::<N>(Rc::clone(c));
         size += sub_size;
         res += sub_res;
     });
-    if size <= 100000 && node_b.size.is_none() {
+    if size <= N && node_b.size.is_none() {
         res += size;
     }
     (size, res)
 }
 
 fn process_part1(root: Rc<RefCell<Node>>) -> usize {
-    let (_, res) = traverse_part1(root);
+    let (_, res) = traverse_part1::<100000>(root);
     return res;
 }
 
