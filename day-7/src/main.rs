@@ -4,20 +4,20 @@ use std::fs;
 use std::rc::Rc;
 
 struct Node {
-    name: String,
-    size: Option<usize>,
-    children: HashMap<String, Rc<RefCell<Node>>>, // any way to share name & key for children?
-    parent: Option<Rc<RefCell<Node>>>,
+    size: Option<usize>, // None is dir
+    children: HashMap<String, Rc<RefCell<Node>>>,
 }
 
 impl Node {
-    fn new(name: String, size: Option<usize>, parent: Option<Rc<RefCell<Node>>>) -> Self {
+    pub fn new(size: Option<usize>) -> Self {
         Node {
-            name: name,
             size: size,
             children: HashMap::new(),
-            parent: parent,
         }
+    }
+
+    pub fn add_child(&mut self, key: &str, new_node: Rc<RefCell<Node>>) {
+        self.children.insert(String::from(key), new_node);
     }
 }
 
@@ -25,22 +25,31 @@ fn read_input(filename: &str) -> String {
     fs::read_to_string(filename).expect("Input for the problem")
 }
 
-fn traverse_node_print(node: Rc<RefCell<Node>>, prefix: String) {
-    let node_b = node.borrow_mut();
-    println!("{}- {} ({})", prefix, node_b.name, node_b.size.unwrap_or(0));
-    for v in node_b.children.values() {
-        traverse_node_print(Rc::clone(v), prefix.clone() + "  ");
+fn traverse_node_print(node: Rc<RefCell<Node>>, name: &str, prefix: &str) {
+    let node_b = node.borrow();
+    println!(
+        "{}- {} ({})",
+        prefix,
+        name,
+        match node_b.size {
+            Some(x) => format!("file, size={x}"),
+            None => String::from("dir"),
+        }
+    );
+    let next_prefix = String::from(prefix) + "  ";
+    for (k, v) in node_b.children.iter() {
+        traverse_node_print(Rc::clone(v), k, &next_prefix);
     }
 }
 
 #[allow(dead_code)]
 fn traverse_print(root: Rc<RefCell<Node>>) {
-    traverse_node_print(root, String::from(""));
+    traverse_node_print(root, "/", "");
 }
 
 fn process_input(input: &str) -> Rc<RefCell<Node>> {
-    let root = Rc::new(RefCell::new(Node::new(String::from("/"), None, None)));
-    let mut cwd = Rc::clone(&root);
+    let root = Rc::new(RefCell::new(Node::new(None)));
+    let mut d_stack = vec![Rc::clone(&root)];
     for c in input.split("$ ") {
         let lines: Vec<&str> = c.split("\n").filter(|line| !line.is_empty()).collect();
         if lines.len() == 0 {
@@ -49,33 +58,30 @@ fn process_input(input: &str) -> Rc<RefCell<Node>> {
         let command: Vec<&str> = lines[0].split(" ").collect();
         match command[0] {
             "cd" => {
-                let cwd_clone = Rc::clone(&cwd);
                 match command[1] {
-                    // Not still fully understanding this...
                     "/" => {
-                        cwd = Rc::clone(&root);
+                        d_stack = vec![Rc::clone(&root)];
                     }
                     ".." => {
-                        cwd = Rc::clone(cwd_clone.borrow_mut().parent.as_ref().unwrap());
+                        d_stack.pop();
                     }
                     d => {
-                        cwd = Rc::clone(cwd_clone.borrow_mut().children.get_mut(d).unwrap());
+                        let cwd = Rc::clone(d_stack.last().unwrap());
+                        d_stack.push(Rc::clone(cwd.borrow().children.get(d).unwrap()));
                     }
                 };
             }
             "ls" => {
                 for l in lines.iter().skip(1) {
                     let line: Vec<&str> = l.split(" ").collect();
-                    let name = String::from(line[1]);
                     let size: Option<usize> = if line[0].eq("dir") {
                         None
                     } else {
-                        Some(line[0].parse::<usize>().unwrap().clone())
+                        Some(line[0].parse::<usize>().unwrap())
                     };
-                    cwd.borrow_mut().children.insert(
-                        name.clone(),
-                        Rc::new(RefCell::new(Node::new(name, size, Some(Rc::clone(&cwd))))),
-                    );
+                    let child = Rc::new(RefCell::new(Node::new(size)));
+                    let cwd = Rc::clone(d_stack.last_mut().unwrap());
+                    cwd.borrow_mut().add_child(line[1], child);
                 }
             }
             _ => panic!("Invalid Input"),
@@ -103,13 +109,6 @@ fn traverse_part1<const N: usize>(node: Rc<RefCell<Node>>) -> (usize, usize) {
 fn process_part1(root: Rc<RefCell<Node>>) -> usize {
     let (_, res) = traverse_part1::<100000>(root);
     return res;
-}
-
-fn part1() {
-    let input = read_input("input.txt");
-    let root = process_input(&input);
-    let res = process_part1(Rc::clone(&root));
-    println!("{}", res);
 }
 
 fn traverse_part2_get_total(node: Rc<RefCell<Node>>) -> usize {
@@ -148,6 +147,13 @@ fn process_part2(root: Rc<RefCell<Node>>) -> usize {
     let total = traverse_part2_get_total(Rc::clone(&root));
     let (_, res) = traverse_part2_min_gte(Rc::clone(&root), total + NEED - AVAIL);
     return res.unwrap();
+}
+
+fn part1() {
+    let input = read_input("input.txt");
+    let root = process_input(&input);
+    let res = process_part1(Rc::clone(&root));
+    println!("{}", res);
 }
 
 fn part2() {
