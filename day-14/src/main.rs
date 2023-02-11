@@ -73,8 +73,13 @@ fn draw_map(paths: &Vec<Vec<(i32, i32)>>) -> (usize, Vec<Vec<char>>) {
 fn display_input(start_pos: usize, map: &Vec<Vec<char>>) {
     let first_line = map[0].iter().collect::<String>();
     println!(
-        "{}+{}",
+        "{}{}{}",
         &first_line[..start_pos],
+        if map[0][start_pos] == '.' {
+            '+'
+        } else {
+            map[0][start_pos]
+        },
         &first_line[start_pos + 1..]
     );
     map.iter()
