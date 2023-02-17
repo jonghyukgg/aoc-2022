@@ -2,8 +2,8 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::fs;
 
-const PART1_FILENAME: &str = "sample.txt";
-// const PART1_FILENAME: &str = "input.txt";
+// const PART1_FILENAME: &str = "sample.txt";
+const PART1_FILENAME: &str = "input.txt";
 const PART1_ITER: usize = 2022;
 const PART1_WIDTH: usize = 7;
 const PART1_FROM_LEFT: usize = 2;
